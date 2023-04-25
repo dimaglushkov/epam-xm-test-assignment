@@ -10,21 +10,27 @@ import (
 )
 
 func run() error {
-	config, err := internal.NewConfig()
+	cfg, err := internal.NewConfig()
 	if err != nil {
 		return err
 	}
 
 	kafka := pubsub.NewKafka()
 
-	repo, err := repositories.NewPostgres(config.DSN)
+	repo, err := repositories.New(cfg.DSN, cfg.DBMaxPoolSize, cfg.DBConnAttempts, cfg.DBConnTimeoutSeconds)
 	if err != nil {
 		return err
 	}
 
+	if cfg.DBApplyMigrations == 1 {
+		if err := repo.Migrate(); err != nil {
+			return err
+		}
+	}
+
 	companyService := services.NewCompanyService(*repo, kafka)
 
-	handler := http.New(config.AppPort, config.AppMode, companyService)
+	handler := http.New(cfg.AppPort, cfg.AppMode, companyService)
 	return handler.Run()
 }
 

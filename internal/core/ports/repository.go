@@ -6,6 +6,7 @@ import (
 )
 
 type RepositoryPort interface {
+	Migrate() error
 	GetCompanyById(id uuid.UUID) (*domain.Company, error)
 	CreateCompany(company domain.Company) error
 	UpdateCompany(company domain.Company) error

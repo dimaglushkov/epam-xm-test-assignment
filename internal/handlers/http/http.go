@@ -24,10 +24,12 @@ func New(port string, mode string, svc ports.CompanyServicePort) *Handler {
 	handler := new(Handler)
 	handler.svc = svc
 	handler.port = port
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
+	router.POST("/company", AuthCheckMiddleware(), handler.createCompany)
 	router.GET("/company/:id", handler.getCompany)
-	router.POST("/company", handler.createCompany).Use(AuthCheckMiddleware())
 
 	handler.router = router
 	return handler

@@ -4,8 +4,6 @@ services:
   db:
     image: postgres:14.1-alpine
     restart: always
-    networks:
-      - internal
     environment:
        - POSTGRES_HOST_AUTH_METHOD=trust
     ports:
@@ -33,13 +31,4 @@ services:
       - "8080:8080"
     depends_on:
       - db
-    networks:
-      - internal
     env_file: .env
-
-networks:
-  internal:
-
-volumes:
-  db:
-    driver: local
