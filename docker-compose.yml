@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    networks:
+      - internal
+    environment:
+       - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+
+#  migrations:
+#    image: migrate/migrate
+#    networks:
+#      - internal
+#    volumes:
+#      - ./migrations:/migrations
+#    depends_on:
+#      - db
+#    command:
+#      [ "-path", "/migrations", "-database",  "postgres://postgres:password@db:5432/postgres?sslmode=disable", "up" ]
+
+  app:
+#    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - internal
+    env_file: .env
+
+networks:
+  internal:
+
+volumes:
+  db:
+    driver: local
