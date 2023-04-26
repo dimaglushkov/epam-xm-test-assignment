@@ -1,8 +1,11 @@
 linters:
+  disable-all: true
   enable:
+    - errcheck
     - gofumpt
-    - tparallel
-    - unconvert
-    - unparam
-    - wastedassign
+    - gosimple
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
     - wsl
