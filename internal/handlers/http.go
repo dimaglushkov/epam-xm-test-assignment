@@ -31,6 +31,7 @@ func NewHTTPHandler(port, mode, signKey string, companyService ports.CompanyServ
 	handler.signKey = signKey
 
 	router := gin.New()
+	_ = router.SetTrustedProxies(nil)
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.GET("/companies/:id", handler.getCompany)

@@ -1,6 +1,5 @@
 linters:
   enable:
-    - thelper
     - gofumpt
     - tparallel
     - unconvert

@@ -1,4 +1,4 @@
 .idea
-bin
 pg_data
 .env.local
+test
