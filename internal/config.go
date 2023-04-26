@@ -10,6 +10,7 @@ type Config struct {
 	AppPort    string `env:"APP_PORT" envDefault:"8080"`
 	AppVersion string `env:"APP_VERSION,required"`
 	AppMode    string `env:"APP_MODE" envDefault:"debug"`
+	AppSignKey string `env:"APP_SIGN_KEY,required"`
 
 	DSN                  string `env:"DB_DSN,required"`
 	DBApplyMigrations    int    `env:"DB_APPLY_MIGRATIONS" envDefault:"1"`

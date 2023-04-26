@@ -29,7 +29,7 @@ func run() error {
 	defer kafka.Close()
 	companyService := services.NewCompanyService(cfg.AppName, repo, kafka)
 
-	handler := handlers.NewHTTPHandler(cfg.AppPort, cfg.AppMode, companyService)
+	handler := handlers.NewHTTPHandler(cfg.AppPort, cfg.AppMode, cfg.AppSignKey, companyService)
 	return handler.Run()
 }
 

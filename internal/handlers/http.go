@@ -2,21 +2,24 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/domain"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/ports"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"log"
 	"net/http"
+	"strings"
 )
 
 type HTTPHandler struct {
 	port           string
 	companyService ports.CompanyService
 	router         *gin.Engine
+	signKey        string
 }
 
-func NewHTTPHandler(port string, mode string, companyService ports.CompanyService) *HTTPHandler {
+func NewHTTPHandler(port, mode, signKey string, companyService ports.CompanyService) *HTTPHandler {
 	if mode != "" {
 		gin.SetMode(mode)
 	}
@@ -24,22 +27,46 @@ func NewHTTPHandler(port string, mode string, companyService ports.CompanyServic
 	handler := new(HTTPHandler)
 	handler.companyService = companyService
 	handler.port = port
+	handler.signKey = signKey
 
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.GET("/companies/:id", handler.getCompany)
-	router.POST("/companies", AuthCheckMiddleware(), handler.createCompany)
-	router.PATCH("/companies/:id", AuthCheckMiddleware(), handler.updateCompany)
-	router.DELETE("/companies/:id", AuthCheckMiddleware(), handler.deleteCompany)
+	router.POST("/companies", handler.AuthCheckMiddleware(), handler.createCompany)
+	router.PATCH("/companies/:id", handler.AuthCheckMiddleware(), handler.updateCompany)
+	router.DELETE("/companies/:id", handler.AuthCheckMiddleware(), handler.deleteCompany)
 
 	handler.router = router
 	return handler
 }
 
-func AuthCheckMiddleware() gin.HandlerFunc {
+func (h *HTTPHandler) AuthCheckMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Print("todo: auth middleware")
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
+			return
+		}
+
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format"})
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(h.signKey), nil
+		})
+
+		if err != nil || !token.Valid {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			return
+		}
+
 		c.Next()
 	}
 }
