@@ -2,8 +2,9 @@ package domain
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -31,33 +32,62 @@ func init() {
 }
 
 type Company struct {
-	Id          uuid.UUID `json:"id"`
-	Name        string    `json:"name" binding:"required"`
-	Description string    `json:"description" binding:"required"`
-	EmployeeCnt int       `json:"employee_cnt" binding:"required"`
-	Registered  bool      `json:"registered" binding:"required"`
-	Type        string    `json:"type" binding:"required"`
+	Id          uuid.UUID `json:"id" binding:"omitempty"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	EmployeeCnt int       `json:"employee_cnt"`
+	Registered  bool      `json:"registered"`
+	Type        string    `json:"type"`
 }
 
-func (c Company) Validate() []error {
-	var errors []error
-	if len(c.Name) < nameMinLen {
-		errors = append(errors, fmt.Errorf("company name is too short, minimal length is %d", nameMinLen))
+func (c *Company) SetId() {
+	c.Id = uuid.New()
+}
+
+func (c *Company) Validate() error {
+	var errorMsgs []string
+
+	if err := ValidateName(c.Name); err != nil {
+		errorMsgs = append(errorMsgs, err.Error())
 	}
-	if len(c.Name) > nameMaxLen {
-		errors = append(errors, fmt.Errorf("company name is too long, max length is %d", nameMaxLen))
+	if err := ValidateDescription(c.Description); err != nil {
+		errorMsgs = append(errorMsgs, err.Error())
 	}
-	if len(c.Description) > descriptionMaxLen {
-		errors = append(errors, fmt.Errorf("company description is too long, max length is %d", descriptionMaxLen))
-	}
-	if _, ok := availableTypes[c.Type]; !ok {
-		errors = append(errors, fmt.Errorf(
-			"\"%s\" company type is not allowed,"+
-				" only the following types are allowed: %s",
-			c.Type,
-			availableTypesString,
-		))
+	if err := ValidateType(c.Type); err != nil {
+		errorMsgs = append(errorMsgs, err.Error())
 	}
 
-	return errors
+	if len(errorMsgs) > 0 {
+		return fmt.Errorf("%s", strings.Join(errorMsgs, "; "))
+	}
+	return nil
+}
+
+func ValidateName(companyName string) error {
+	if len(companyName) < nameMinLen {
+		return fmt.Errorf("company name is too short, minimal length is %d", nameMinLen)
+	}
+	if len(companyName) > nameMaxLen {
+		return fmt.Errorf("company name is too long, max length is %d", nameMaxLen)
+	}
+	return nil
+}
+
+func ValidateDescription(companyDescription string) error {
+	if len(companyDescription) > descriptionMaxLen {
+		return fmt.Errorf("company description is too long, max length is %d", descriptionMaxLen)
+	}
+	return nil
+}
+
+func ValidateType(companyType string) error {
+	if _, ok := availableTypes[companyType]; !ok {
+		return fmt.Errorf(
+			"\"%s\" company type is not allowed,"+
+				" only the following types are allowed: %s",
+			companyType,
+			availableTypesString,
+		)
+	}
+	return nil
 }

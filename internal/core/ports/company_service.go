@@ -1,13 +1,14 @@
 package ports
 
 import (
+	"context"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/domain"
 	"github.com/google/uuid"
 )
 
 type CompanyServicePort interface {
-	GetById(id uuid.UUID) (*domain.Company, error)
-	Create(company domain.Company) error
-	Update(company domain.Company) error
-	Delete(company domain.Company) error
+	Get(ctx context.Context, id uuid.UUID) (*domain.Company, error)
+	Create(ctx context.Context, company *domain.Company) error
+	Update(ctx context.Context, id uuid.UUID, fieldsToUpdate map[string]any) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }

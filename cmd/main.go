@@ -15,18 +15,17 @@ func run() error {
 		return err
 	}
 
-	kafka := pubsub.NewKafka()
-
 	repo, err := repositories.New(cfg.DSN, cfg.DBMaxPoolSize, cfg.DBConnAttempts, cfg.DBConnTimeoutSeconds)
 	if err != nil {
 		return err
 	}
-
 	if cfg.DBApplyMigrations == 1 {
 		if err := repo.Migrate(); err != nil {
 			return err
 		}
 	}
+
+	kafka := pubsub.NewKafka()
 
 	companyService := services.NewCompanyService(*repo, kafka)
 

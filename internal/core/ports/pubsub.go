@@ -1,4 +1,3 @@
 package ports
 
-type PubSubPort interface {
-}
+type PubSubPort interface{}
