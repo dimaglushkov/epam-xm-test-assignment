@@ -11,6 +11,7 @@ const (
 	nameMinLen        = 3
 	nameMaxLen        = 15
 	descriptionMaxLen = 3000
+	employeeCntMax    = 10_000_000_000
 )
 
 var (
@@ -56,9 +57,22 @@ func (c *Company) Validate() error {
 	if err := ValidateType(c.Type); err != nil {
 		errorMsgs = append(errorMsgs, err.Error())
 	}
+	if err := ValidateEmployeeCnt(c.EmployeeCnt); err != nil {
+		errorMsgs = append(errorMsgs, err.Error())
+	}
 
 	if len(errorMsgs) > 0 {
 		return fmt.Errorf("%s", strings.Join(errorMsgs, "; "))
+	}
+	return nil
+}
+
+func ValidateEmployeeCnt(cnt int) error {
+	if cnt < 0 {
+		return fmt.Errorf("amount of employee can't be negative")
+	}
+	if cnt > employeeCntMax {
+		return fmt.Errorf("amount of employee can't exceed %d", employeeCntMax)
 	}
 	return nil
 }

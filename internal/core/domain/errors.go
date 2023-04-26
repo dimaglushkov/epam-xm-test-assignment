@@ -21,14 +21,14 @@ func (e CompanyNotFoundError) Error() string {
 	return fmt.Sprintf("company with id \"%s\" doesnt exist", e.Id)
 }
 
-type CompanyNameAlreadyTakenError struct {
+type NameAlreadyTakenError struct {
 	Name string
 }
 
-func NewCompanyNameAlreadyTakenError(name string) *CompanyNameAlreadyTakenError {
-	return &CompanyNameAlreadyTakenError{Name: name}
+func NewNameAlreadyTakenError(name string) *NameAlreadyTakenError {
+	return &NameAlreadyTakenError{Name: name}
 }
 
-func (e CompanyNameAlreadyTakenError) Error() string {
+func (e NameAlreadyTakenError) Error() string {
 	return fmt.Sprintf("company with the name \"%s\" already exists", e.Name)
 }

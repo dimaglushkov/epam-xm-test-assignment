@@ -47,7 +47,7 @@ func (cs CompanyService) Create(ctx context.Context, company *domain.Company) er
 	company.SetId()
 	err := cs.repo.CreateCompany(ctx, company)
 	if err != nil {
-		var companyNameAlreadyTakenError *domain.CompanyNameAlreadyTakenError
+		var companyNameAlreadyTakenError *domain.NameAlreadyTakenError
 		if errors.As(err, &companyNameAlreadyTakenError) {
 			return err
 		}
@@ -104,8 +104,12 @@ func (cs CompanyService) Update(ctx context.Context, id uuid.UUID, fieldsToUpdat
 			if !okInt && !okFloat {
 				return fmt.Errorf("unsupported type for field %s", field)
 			}
+			intVal := int(val.(float64))
 			if okFloat {
-				fieldsToUpdate[field] = int(val.(float64))
+				fieldsToUpdate[field] = intVal
+			}
+			if err := domain.ValidateEmployeeCnt(intVal); err != nil {
+				return err
 			}
 
 		case "registered":
@@ -120,7 +124,7 @@ func (cs CompanyService) Update(ctx context.Context, id uuid.UUID, fieldsToUpdat
 
 	err := cs.repo.UpdateCompany(ctx, id, fieldsToUpdate)
 	if err != nil {
-		var companyNameAlreadyTakenError *domain.CompanyNameAlreadyTakenError
+		var companyNameAlreadyTakenError *domain.NameAlreadyTakenError
 		var companyNotFoundErr *domain.CompanyNotFoundError
 		if errors.As(err, &companyNotFoundErr) || errors.As(err, &companyNameAlreadyTakenError) {
 			return err

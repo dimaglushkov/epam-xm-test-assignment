@@ -141,7 +141,7 @@ func (p Postgres) CreateCompany(ctx context.Context, company *domain.Company) er
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return domain.NewCompanyNameAlreadyTakenError(company.Name)
+			return domain.NewNameAlreadyTakenError(company.Name)
 		}
 		return fmt.Errorf("create company: error executing query: %w", err)
 	}
@@ -166,7 +166,7 @@ func (p Postgres) UpdateCompany(ctx context.Context, id uuid.UUID, fieldsToUpdat
 		if _, nameChanged := fieldsToUpdate["name"]; nameChanged &&
 			errors.As(err, &constraintError) &&
 			constraintError.Code == pgerrcode.UniqueViolation {
-			return domain.NewCompanyNameAlreadyTakenError(fieldsToUpdate["name"].(string))
+			return domain.NewNameAlreadyTakenError(fieldsToUpdate["name"].(string))
 		}
 		return fmt.Errorf("update company: error executing query: %w", err)
 	}
