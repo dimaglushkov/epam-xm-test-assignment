@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/services"
-	"github.com/dimaglushkov/epam-xm-test-assignment/internal/handlers/http"
-	"github.com/dimaglushkov/epam-xm-test-assignment/internal/pubsub"
+	"github.com/dimaglushkov/epam-xm-test-assignment/internal/events"
+	"github.com/dimaglushkov/epam-xm-test-assignment/internal/handlers"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/repositories"
 	"log"
 )
@@ -15,7 +15,7 @@ func run() error {
 		return err
 	}
 
-	repo, err := repositories.New(cfg.DSN, cfg.DBMaxPoolSize, cfg.DBConnAttempts, cfg.DBConnTimeoutSeconds)
+	repo, err := repositories.NewPostgres(cfg.DSN, cfg.DBMaxPoolSize, cfg.DBConnAttempts, cfg.DBConnTimeoutSeconds)
 	if err != nil {
 		return err
 	}
@@ -25,11 +25,11 @@ func run() error {
 		}
 	}
 
-	kafka := pubsub.NewKafka()
+	kafka := events.NewKafkaWriter(cfg.KafkaBrokers, cfg.KafkaTopic)
+	defer kafka.Close()
+	companyService := services.NewCompanyService(cfg.AppName, repo, kafka)
 
-	companyService := services.NewCompanyService(*repo, kafka)
-
-	handler := http.New(cfg.AppPort, cfg.AppMode, companyService)
+	handler := handlers.NewHTTPHandler(cfg.AppPort, cfg.AppMode, companyService)
 	return handler.Run()
 }
 

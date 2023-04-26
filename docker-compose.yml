@@ -11,19 +11,38 @@ services:
     volumes:
       - ./pg_data:/var/lib/postgresql/data
 
-#  migrations:
-#    image: migrate/migrate
-#    networks:
-#      - internal
-#    volumes:
-#      - ./migrations:/migrations
-#    depends_on:
-#      - db
-#    command:
-#      [ "-path", "/migrations", "-database",  "postgres://postgres:password@db:5432/postgres?sslmode=disable", "up" ]
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:latest
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+
+  # I've added this dummy consumer only for demonstrative purpose
+  # It simply consumes and logs every event from the topic
+  dummy-consumer:
+    build:
+      context: ./util/dummy-consumer
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    env_file: .env
 
   app:
-#    restart: always
+    restart: always
     build:
       context: ./
       dockerfile: Dockerfile
@@ -31,4 +50,5 @@ services:
       - "8080:8080"
     depends_on:
       - db
+      - kafka
     env_file: .env

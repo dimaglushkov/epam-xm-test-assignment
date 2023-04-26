@@ -11,14 +11,17 @@ import (
 )
 
 type CompanyService struct {
-	repo ports.RepositoryPort
-	ps   ports.PubSubPort
+	repo         ports.Repository
+	eventsWriter ports.EventsWriter
+	appName      string
 }
 
-func NewCompanyService(repo ports.RepositoryPort, ps ports.PubSubPort) *CompanyService {
+func NewCompanyService(appName string, repo ports.Repository, ew ports.EventsWriter) *CompanyService {
 	return &CompanyService{
-		repo: repo,
-		ps:   ps,
+		appName: appName,
+
+		repo:         repo,
+		eventsWriter: ew,
 	}
 }
 
@@ -32,7 +35,8 @@ func (cs CompanyService) Get(ctx context.Context, id uuid.UUID) (*domain.Company
 		log.Printf("company service: get: %s", err.Error())
 		return nil, domain.ErrInternalServer
 	}
-	return company, err
+
+	return company, nil
 }
 
 func (cs CompanyService) Create(ctx context.Context, company *domain.Company) error {
@@ -49,6 +53,16 @@ func (cs CompanyService) Create(ctx context.Context, company *domain.Company) er
 		}
 		log.Printf("company service: create: %s", err.Error())
 		return domain.ErrInternalServer
+	}
+
+	event := ports.NewCompanyMutationEvent(
+		"CompanyCreated",
+		cs.appName,
+		company,
+	)
+
+	if err := cs.eventsWriter.Write(ctx, event); err != nil {
+		log.Printf("company service: create: send event: %s", err.Error())
 	}
 
 	return nil
@@ -114,6 +128,16 @@ func (cs CompanyService) Update(ctx context.Context, id uuid.UUID, fieldsToUpdat
 		log.Printf("company service: update: %s", err.Error())
 		return domain.ErrInternalServer
 	}
+
+	fieldsToUpdate["id"] = id
+	event := ports.NewCompanyMutationEvent(
+		"CompanyUpdated",
+		cs.appName,
+		fieldsToUpdate,
+	)
+	if err := cs.eventsWriter.Write(ctx, event); err != nil {
+		log.Printf("company service: update: send event: %s", err.Error())
+	}
 	return nil
 }
 
@@ -127,6 +151,14 @@ func (cs CompanyService) Delete(ctx context.Context, id uuid.UUID) error {
 		}
 		log.Printf("company service: delete: %s", err.Error())
 		return domain.ErrInternalServer
+	}
+	event := ports.NewCompanyMutationEvent(
+		"CompanyDeleted",
+		cs.appName,
+		map[string]string{"id": id.String()},
+	)
+	if err := cs.eventsWriter.Write(ctx, event); err != nil {
+		log.Printf("company service: delete: send event: %s", err.Error())
 	}
 	return nil
 }

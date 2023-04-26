@@ -34,7 +34,7 @@ type Postgres struct {
 	connTimeout  time.Duration
 }
 
-func New(dsn string, maxPoolSize, connAttempts, connTimeoutSeconds int) (*Postgres, error) {
+func NewPostgres(dsn string, maxPoolSize, connAttempts, connTimeoutSeconds int) (*Postgres, error) {
 	pg := Postgres{
 		dsn:          dsn,
 		maxPoolSize:  maxPoolSize,

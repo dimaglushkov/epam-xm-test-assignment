@@ -1,4 +1,4 @@
-package http
+package handlers
 
 import (
 	"errors"
@@ -10,18 +10,18 @@ import (
 	"net/http"
 )
 
-type Handler struct {
+type HTTPHandler struct {
 	port           string
-	companyService ports.CompanyServicePort
+	companyService ports.CompanyService
 	router         *gin.Engine
 }
 
-func New(port string, mode string, companyService ports.CompanyServicePort) *Handler {
+func NewHTTPHandler(port string, mode string, companyService ports.CompanyService) *HTTPHandler {
 	if mode != "" {
 		gin.SetMode(mode)
 	}
 
-	handler := new(Handler)
+	handler := new(HTTPHandler)
 	handler.companyService = companyService
 	handler.port = port
 
@@ -44,11 +44,11 @@ func AuthCheckMiddleware() gin.HandlerFunc {
 	}
 }
 
-func (h *Handler) Run() error {
+func (h *HTTPHandler) Run() error {
 	return h.router.Run(":" + h.port)
 }
 
-func (h *Handler) getCompany(c *gin.Context) {
+func (h *HTTPHandler) getCompany(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		errorResponse(c, err)
@@ -64,7 +64,7 @@ func (h *Handler) getCompany(c *gin.Context) {
 	c.JSON(200, company)
 }
 
-func (h *Handler) createCompany(c *gin.Context) {
+func (h *HTTPHandler) createCompany(c *gin.Context) {
 	company := new(domain.Company)
 	if err := c.ShouldBind(company); err != nil {
 		errorResponse(c, err)
@@ -79,7 +79,7 @@ func (h *Handler) createCompany(c *gin.Context) {
 	c.JSON(200, company)
 }
 
-func (h *Handler) updateCompany(c *gin.Context) {
+func (h *HTTPHandler) updateCompany(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		errorResponse(c, err)
@@ -105,7 +105,7 @@ func (h *Handler) updateCompany(c *gin.Context) {
 	c.JSON(200, company)
 }
 
-func (h *Handler) deleteCompany(c *gin.Context) {
+func (h *HTTPHandler) deleteCompany(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		errorResponse(c, err)
@@ -127,9 +127,7 @@ func errorResponse(c *gin.Context, err error) {
 		code = http.StatusNotFound
 	}
 
-	c.AbortWithStatusJSON(code, struct {
-		Error string `json:"error"`
-	}{
-		err.Error(),
+	c.AbortWithStatusJSON(code, gin.H{
+		"error": err.Error(),
 	})
 }

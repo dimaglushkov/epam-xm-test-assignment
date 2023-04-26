@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type RepositoryPort interface {
+type Repository interface {
 	Migrate() error
 	GetCompanyById(ctx context.Context, id uuid.UUID) (*domain.Company, error)
 	CreateCompany(ctx context.Context, company *domain.Company) error
