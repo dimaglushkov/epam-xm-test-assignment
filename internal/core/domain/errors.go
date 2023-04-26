@@ -2,23 +2,22 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
-var (
-	ErrInternalServer = fmt.Errorf("internal server error")
-)
+var ErrInternalServer = fmt.Errorf("internal server error")
 
 type CompanyNotFoundError struct {
-	Id uuid.UUID
+	ID uuid.UUID
 }
 
 func NewCompanyNotFoundError(id uuid.UUID) *CompanyNotFoundError {
-	return &CompanyNotFoundError{Id: id}
+	return &CompanyNotFoundError{ID: id}
 }
 
 func (e CompanyNotFoundError) Error() string {
-	return fmt.Sprintf("company with id \"%s\" doesnt exist", e.Id)
+	return fmt.Sprintf("company with id \"%s\" doesnt exist", e.ID)
 }
 
 type NameAlreadyTakenError struct {

@@ -2,6 +2,8 @@ package services_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/domain"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/services"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/events"
@@ -9,13 +11,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var (
 	appName = "test-app"
 	Company = domain.Company{
-		Id:          uuid.New(),
+		ID:          uuid.New(),
 		Name:        "some name",
 		Description: "",
 		EmployeeCnt: 6,
@@ -34,7 +35,8 @@ func TestCompanyService_Get(t *testing.T) {
 
 	mockEventsWriter := events.NewMockEventsWriter(ctrl)
 	mockRepo := repositories.NewMockRepository(ctrl)
-	mockRepo.EXPECT().GetCompanyById(context.Background(), Company.Id).Return(&Company, nil)
+	mockRepo.EXPECT().GetCompanyById(context.Background(), Company.ID).Return(&Company, nil)
+
 	for _, id := range ids {
 		mockRepo.EXPECT().GetCompanyById(context.Background(), id).Return(nil, domain.NewCompanyNotFoundError(id))
 	}
@@ -47,7 +49,7 @@ func TestCompanyService_Get(t *testing.T) {
 		assert.ErrorAs(t, err, &CompanyNotFoundError)
 	}
 
-	res, err := companyService.Get(context.Background(), Company.Id)
+	res, err := companyService.Get(context.Background(), Company.ID)
 	assert.Equal(t, res, &Company)
 	assert.NoError(t, err)
 }
@@ -93,19 +95,19 @@ func TestCompanyService_Update(t *testing.T) {
 	mockEventsWriter.EXPECT().Write(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	mockRepo := repositories.NewMockRepository(ctrl)
-	mockRepo.EXPECT().UpdateCompany(gomock.Any(), Company.Id, Update).Return(nil)
+	mockRepo.EXPECT().UpdateCompany(gomock.Any(), Company.ID, Update).Return(nil)
 	mockRepo.EXPECT().UpdateCompany(gomock.Any(), ids[0], Update).Return(domain.NewCompanyNotFoundError(ids[0]))
 	mockRepo.EXPECT().UpdateCompany(gomock.Any(), ids[1], Update).Return(domain.NewNameAlreadyTakenError(Update["name"].(string)))
 
 	companyService := services.NewCompanyService(appName, mockRepo, mockEventsWriter)
 
-	err := companyService.Update(context.Background(), Company.Id, Update)
+	err := companyService.Update(context.Background(), Company.ID, Update)
 	assert.NoError(t, err)
 	err = companyService.Update(context.Background(), ids[0], Update)
 	assert.ErrorAs(t, err, &CompanyNotFoundError)
 	err = companyService.Update(context.Background(), ids[1], Update)
 	assert.ErrorAs(t, err, &CompanyNameAlreadyTakenError)
-	err = companyService.Update(context.Background(), Company.Id, InvalidUpdate)
+	err = companyService.Update(context.Background(), Company.ID, InvalidUpdate)
 	assert.ErrorContains(t, err, "unsupported type")
 }
 
@@ -117,12 +119,12 @@ func TestCompanyService_Delete(t *testing.T) {
 	mockEventsWriter.EXPECT().Write(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 	mockRepo := repositories.NewMockRepository(ctrl)
-	mockRepo.EXPECT().DeleteCompany(gomock.Any(), Company.Id).Return(nil)
-	mockRepo.EXPECT().DeleteCompany(gomock.Any(), Company.Id).Return(domain.NewCompanyNotFoundError(Company.Id))
+	mockRepo.EXPECT().DeleteCompany(gomock.Any(), Company.ID).Return(nil)
+	mockRepo.EXPECT().DeleteCompany(gomock.Any(), Company.ID).Return(domain.NewCompanyNotFoundError(Company.ID))
 
 	companyService := services.NewCompanyService(appName, mockRepo, mockEventsWriter)
-	err := companyService.Delete(context.Background(), Company.Id)
+	err := companyService.Delete(context.Background(), Company.ID)
 	assert.NoError(t, err)
-	err = companyService.Delete(context.Background(), Company.Id)
+	err = companyService.Delete(context.Background(), Company.ID)
 	assert.ErrorAs(t, err, &CompanyNotFoundError)
 }

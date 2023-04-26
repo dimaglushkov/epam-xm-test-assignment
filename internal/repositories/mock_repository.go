@@ -28,6 +28,7 @@ type MockRepositoryMockRecorder struct {
 func NewMockRepository(ctrl *gomock.Controller) *MockRepository {
 	mock := &MockRepository{ctrl: ctrl}
 	mock.recorder = &MockRepositoryMockRecorder{mock}
+
 	return mock
 }
 
@@ -41,6 +42,7 @@ func (m *MockRepository) CreateCompany(ctx context.Context, company *domain.Comp
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateCompany", ctx, company)
 	ret0, _ := ret[0].(error)
+
 	return ret0
 }
 
@@ -55,6 +57,7 @@ func (m *MockRepository) DeleteCompany(ctx context.Context, id uuid.UUID) error 
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteCompany", ctx, id)
 	ret0, _ := ret[0].(error)
+
 	return ret0
 }
 
@@ -65,18 +68,19 @@ func (mr *MockRepositoryMockRecorder) DeleteCompany(ctx, id interface{}) *gomock
 }
 
 // GetCompanyById mocks base method.
-func (m *MockRepository) GetCompanyById(ctx context.Context, id uuid.UUID) (*domain.Company, error) {
+func (m *MockRepository) GetCompanyByID(ctx context.Context, id uuid.UUID) (*domain.Company, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCompanyById", ctx, id)
+	ret := m.ctrl.Call(m, "GetCompanyByID", ctx, id)
 	ret0, _ := ret[0].(*domain.Company)
 	ret1, _ := ret[1].(error)
+
 	return ret0, ret1
 }
 
 // GetCompanyById indicates an expected call of GetCompanyById.
 func (mr *MockRepositoryMockRecorder) GetCompanyById(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompanyById", reflect.TypeOf((*MockRepository)(nil).GetCompanyById), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCompanyByID", reflect.TypeOf((*MockRepository)(nil).GetCompanyByID), ctx, id)
 }
 
 // Migrate mocks base method.
@@ -84,6 +88,7 @@ func (m *MockRepository) Migrate() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Migrate")
 	ret0, _ := ret[0].(error)
+
 	return ret0
 }
 
@@ -98,6 +103,7 @@ func (m *MockRepository) UpdateCompany(ctx context.Context, id uuid.UUID, fields
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateCompany", ctx, id, fieldsToUpdate)
 	ret0, _ := ret[0].(error)
+
 	return ret0
 }
 

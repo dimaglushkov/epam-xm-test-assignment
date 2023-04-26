@@ -3,22 +3,23 @@ package events
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
 	"github.com/segmentio/kafka-go"
-	"log"
 )
 
 type KafkaWriter struct {
-	appName string
 	brokers []string
 	topic   string
 	writer  *kafka.Writer
 }
 
-func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
+func NewKafkaWriter(brokers []string, topic string) (*KafkaWriter, error) {
 	_, err := kafka.DialLeader(context.Background(), "tcp", brokers[0], topic, 0)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("new kafka writer: error dialing: %w", err)
 	}
+
 	return &KafkaWriter{
 		brokers: brokers,
 		topic:   topic,
@@ -27,7 +28,7 @@ func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
 			Topic:    topic,
 			Balancer: &kafka.LeastBytes{},
 		},
-	}
+	}, nil
 }
 
 func (kw *KafkaWriter) Write(ctx context.Context, data ...any) error {
@@ -38,10 +39,12 @@ func (kw *KafkaWriter) Write(ctx context.Context, data ...any) error {
 		if err != nil {
 			return err
 		}
+
 		messages = append(messages, kafka.Message{Value: serializedData})
 	}
 
 	err := kw.writer.WriteMessages(ctx, messages...)
+
 	return err
 }
 

@@ -2,12 +2,13 @@ package ports
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type CompanyMutationEvent struct {
-	Id       uuid.UUID `json:"id"`
+	ID       uuid.UUID `json:"id"`
 	Name     string    `json:"name"`
 	Time     time.Time `json:"time"`
 	Producer string    `json:"producer"`
@@ -16,7 +17,7 @@ type CompanyMutationEvent struct {
 
 func NewCompanyMutationEvent(eventName string, producer string, data any) *CompanyMutationEvent {
 	return &CompanyMutationEvent{
-		Id:       uuid.New(),
+		ID:       uuid.New(),
 		Name:     eventName,
 		Time:     time.Now(),
 		Producer: producer,

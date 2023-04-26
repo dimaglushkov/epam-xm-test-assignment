@@ -3,13 +3,14 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/domain"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/ports"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"net/http"
-	"strings"
 )
 
 type HTTPHandler struct {
@@ -38,6 +39,7 @@ func NewHTTPHandler(port, mode, signKey string, companyService ports.CompanyServ
 	router.DELETE("/companies/:id", handler.AuthCheckMiddleware(), handler.deleteCompany)
 
 	handler.router = router
+
 	return handler
 }
 
@@ -59,6 +61,7 @@ func (h *HTTPHandler) AuthCheckMiddleware() gin.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
+
 			return []byte(h.signKey), nil
 		})
 
@@ -88,7 +91,7 @@ func (h *HTTPHandler) getCompany(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, company)
+	c.JSON(http.StatusOK, company)
 }
 
 func (h *HTTPHandler) createCompany(c *gin.Context) {
@@ -103,7 +106,7 @@ func (h *HTTPHandler) createCompany(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, company)
+	c.JSON(http.StatusOK, company)
 }
 
 func (h *HTTPHandler) updateCompany(c *gin.Context) {
@@ -129,7 +132,8 @@ func (h *HTTPHandler) updateCompany(c *gin.Context) {
 		errorResponse(c, err)
 		return
 	}
-	c.JSON(200, company)
+
+	c.JSON(http.StatusOK, company)
 }
 
 func (h *HTTPHandler) deleteCompany(c *gin.Context) {
@@ -138,6 +142,7 @@ func (h *HTTPHandler) deleteCompany(c *gin.Context) {
 		errorResponse(c, err)
 		return
 	}
+
 	if err := h.companyService.Delete(c, id); err != nil {
 		errorResponse(c, err)
 		return
@@ -149,6 +154,7 @@ func errorResponse(c *gin.Context, err error) {
 	if errors.Is(err, domain.ErrInternalServer) {
 		code = http.StatusInternalServerError
 	}
+
 	var companyNotFoundErr *domain.CompanyNotFoundError
 	if errors.As(err, &companyNotFoundErr) {
 		code = http.StatusNotFound

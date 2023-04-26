@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log"
+
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/services"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/events"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/handlers"
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/repositories"
-	"log"
 )
 
 func run() error {
@@ -19,17 +20,24 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	defer repo.Pool.Close()
+
 	if cfg.DBApplyMigrations == 1 {
 		if err := repo.Migrate(); err != nil {
 			return err
 		}
 	}
 
-	kafka := events.NewKafkaWriter(cfg.KafkaBrokers, cfg.KafkaTopic)
+	kafka, err := events.NewKafkaWriter(cfg.KafkaBrokers, cfg.KafkaTopic)
+	if err != nil {
+		return err
+	}
 	defer kafka.Close()
+
 	companyService := services.NewCompanyService(cfg.AppName, repo, kafka)
 
 	handler := handlers.NewHTTPHandler(cfg.AppPort, cfg.AppMode, cfg.AppSignKey, companyService)
+
 	return handler.Run()
 }
 

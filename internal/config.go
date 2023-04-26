@@ -4,7 +4,7 @@ import (
 	"github.com/caarlos0/env/v6"
 )
 
-// Config represents applications config loaded from environment variables with default values
+// Config represents applications config loaded from environment variables with default values.
 type Config struct {
 	AppName    string `env:"APP_NAME,required"`
 	AppPort    string `env:"APP_PORT" envDefault:"8080"`
@@ -22,12 +22,14 @@ type Config struct {
 	KafkaTopic   string   `env:"KAFKA_TOPIC,required"`
 }
 
-// NewConfig returns app configuration of type Config
+// NewConfig returns app configuration of type Config.
 func NewConfig() (*Config, error) {
 	cfg := Config{}
+
 	err := env.Parse(&cfg)
 	if err != nil {
 		return nil, err
 	}
+
 	return &cfg, nil
 }

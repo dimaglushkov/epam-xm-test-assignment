@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5"
 	"log"
 	"time"
+
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/domain"
 
@@ -48,12 +49,14 @@ func NewPostgres(dsn string, maxPoolSize, connAttempts, connTimeoutSeconds int) 
 	if err != nil {
 		return nil, fmt.Errorf("error while parsing pool config from dsn: %w", err)
 	}
+
 	poolConfig.MaxConns = int32(pg.maxPoolSize)
 	for attempts := pg.connAttempts; attempts > 0; attempts-- {
 		pg.Pool, err = pgxpool.NewWithConfig(context.Background(), poolConfig)
 		if err == nil {
 			break
 		}
+
 		log.Printf("postgres: trying to connect to database instance, %d attempts left", attempts)
 		time.Sleep(pg.connTimeout)
 	}
@@ -61,27 +64,33 @@ func NewPostgres(dsn string, maxPoolSize, connAttempts, connTimeoutSeconds int) 
 	if err != nil {
 		return nil, fmt.Errorf("error while connecting to the database: %w", err)
 	}
+
 	log.Printf("postgres: connected successfully")
+
 	return &pg, nil
 }
 
 func (p Postgres) Migrate() error {
 	var migration *migrate.Migrate
+
 	var err error
 	for attempts := p.connAttempts; attempts > 0; attempts-- {
 		migration, err = migrate.New("file://migrations", p.dsn)
 		if err == nil {
 			break
 		}
+
 		log.Printf("migrate: trying to connect to database instance, %d attempts left", attempts)
 		time.Sleep(p.connTimeout)
 	}
+
 	if err != nil {
 		return fmt.Errorf("error while trying to migrate: database connection error: %s", err)
 	}
 
 	err = migration.Up()
 	defer migration.Close()
+
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("migrate: up error: %w", err)
 	}
@@ -91,10 +100,11 @@ func (p Postgres) Migrate() error {
 	} else {
 		log.Printf("migrate: success")
 	}
+
 	return nil
 }
 
-func (p Postgres) GetCompanyById(ctx context.Context, id uuid.UUID) (*domain.Company, error) {
+func (p Postgres) GetCompanyByID(ctx context.Context, id uuid.UUID) (*domain.Company, error) {
 	query, args, err := p.Builder.
 		Select("id, name, description, employee_cnt, registered, type").
 		From(companyTable).
@@ -106,8 +116,9 @@ func (p Postgres) GetCompanyById(ctx context.Context, id uuid.UUID) (*domain.Com
 
 	row := p.Pool.QueryRow(ctx, query, args...)
 	targetCompany := new(domain.Company)
+
 	err = row.Scan(
-		&targetCompany.Id,
+		&targetCompany.ID,
 		&targetCompany.Name,
 		&targetCompany.Description,
 		&targetCompany.EmployeeCnt,
@@ -118,20 +129,22 @@ func (p Postgres) GetCompanyById(ctx context.Context, id uuid.UUID) (*domain.Com
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.NewCompanyNotFoundError(id)
 		}
+
 		return nil, fmt.Errorf("get company: error scanning row: %w", err)
 	}
+
 	return targetCompany, nil
 }
 
 func (p Postgres) CreateCompany(ctx context.Context, company *domain.Company) error {
-	if company.Id == uuid.Nil {
-		company.SetId()
+	if company.ID == uuid.Nil {
+		company.SetID()
 	}
 
 	query, args, err := p.Builder.
 		Insert(companyTable).
 		Columns("id, name, description, employee_cnt, registered, type").
-		Values(company.Id, company.Name, company.Description, company.EmployeeCnt, company.Registered, company.Type).
+		Values(company.ID, company.Name, company.Description, company.EmployeeCnt, company.Registered, company.Type).
 		ToSql()
 	if err != nil {
 		return fmt.Errorf("create company: error building query: %w", err)
@@ -143,6 +156,7 @@ func (p Postgres) CreateCompany(ctx context.Context, company *domain.Company) er
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return domain.NewNameAlreadyTakenError(company.Name)
 		}
+
 		return fmt.Errorf("create company: error executing query: %w", err)
 	}
 
@@ -154,7 +168,9 @@ func (p Postgres) UpdateCompany(ctx context.Context, id uuid.UUID, fieldsToUpdat
 	for field, val := range fieldsToUpdate {
 		updateQueryBuilder = updateQueryBuilder.Set(field, val)
 	}
+
 	updateQueryBuilder = updateQueryBuilder.Where("id = ?", id)
+
 	query, args, err := updateQueryBuilder.ToSql()
 	if err != nil {
 		return fmt.Errorf("update company: error building query: %w", err)
@@ -168,11 +184,14 @@ func (p Postgres) UpdateCompany(ctx context.Context, id uuid.UUID, fieldsToUpdat
 			constraintError.Code == pgerrcode.UniqueViolation {
 			return domain.NewNameAlreadyTakenError(fieldsToUpdate["name"].(string))
 		}
+
 		return fmt.Errorf("update company: error executing query: %w", err)
 	}
+
 	if commandTag.RowsAffected() == 0 {
 		return domain.NewCompanyNotFoundError(id)
 	}
+
 	return nil
 }
 
@@ -184,6 +203,7 @@ func (p Postgres) DeleteCompany(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return fmt.Errorf("delete company: error building query: %w", err)
 	}
+
 	commandTag, err := p.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("delete company: error executing query: %w", err)
@@ -192,5 +212,6 @@ func (p Postgres) DeleteCompany(ctx context.Context, id uuid.UUID) error {
 	if commandTag.RowsAffected() == 0 {
 		return domain.NewCompanyNotFoundError(id)
 	}
+
 	return nil
 }

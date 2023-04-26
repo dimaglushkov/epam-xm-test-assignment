@@ -1,9 +1,10 @@
 package domain_test
 
 import (
+	"testing"
+
 	"github.com/dimaglushkov/epam-xm-test-assignment/internal/core/domain"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestValidateName(t *testing.T) {

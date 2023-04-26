@@ -26,6 +26,7 @@ type MockEventsWriterMockRecorder struct {
 func NewMockEventsWriter(ctrl *gomock.Controller) *MockEventsWriter {
 	mock := &MockEventsWriter{ctrl: ctrl}
 	mock.recorder = &MockEventsWriterMockRecorder{mock}
+
 	return mock
 }
 
@@ -49,18 +50,23 @@ func (mr *MockEventsWriterMockRecorder) Close() *gomock.Call {
 // Write mocks base method.
 func (m *MockEventsWriter) Write(ctx context.Context, data ...any) error {
 	m.ctrl.T.Helper()
+
 	varargs := []interface{}{ctx}
 	for _, a := range data {
 		varargs = append(varargs, a)
 	}
+
 	ret := m.ctrl.Call(m, "Write", varargs...)
 	ret0, _ := ret[0].(error)
+
 	return ret0
 }
 
 // Write indicates an expected call of Write.
 func (mr *MockEventsWriterMockRecorder) Write(ctx interface{}, data ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
+
 	varargs := append([]interface{}{ctx}, data...)
+
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockEventsWriter)(nil).Write), varargs...)
 }
